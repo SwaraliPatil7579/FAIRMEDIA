@@ -342,69 +342,89 @@ function ContentAnalyzer() {
 
       // ── Run frontend detection IMMEDIATELY (no backend dependency) ──
       const spans = detectBiasSpansLocally(content)
+      const altText = generateAlternativeText(content)
       setLocalSpans(spans)
-      setAlternativeText(generateAlternativeText(content))
+      setAlternativeText(altText)
 
-      // ── Call backend (may enrich spans further) ──
-      const result = await analyzeText(content, { language })
-      saveAnalysis({ ...result, content })
-
-      if (result.bias_detection?.language_detected) {
-        setPreprocessing(prev => ({ ...prev, detectedLanguage: result.bias_detection.language_detected }))
+      // ── Call backend (enriches scores and may add more spans) ──
+      let result = null
+      try {
+        result = await analyzeText(content, { language })
+        saveAnalysis({ ...result, content })
+      } catch (backendErr) {
+        console.warn('Backend unavailable, using frontend-only detection:', backendErr)
       }
 
-      // Merge backend spans that aren't already covered by local detection
-      if (result.bias_detection?.highlighted_text?.length > 0) {
-        const merged = [...spans]
-        result.bias_detection.highlighted_text.forEach(backendSpan => {
-          const alreadyCovered = spans.some(ls =>
-            ls.text.toLowerCase() === backendSpan.text?.toLowerCase()
-          )
-          if (!alreadyCovered && backendSpan.text) {
-            merged.push({
-              text: backendSpan.text,
-              suggestion: backendSpan.suggestion || 'review needed',
-              bias_type: backendSpan.bias_type || 'gender_bias',
-              severity: backendSpan.severity || 'medium',
-              start: content.toLowerCase().indexOf(backendSpan.text.toLowerCase()),
-              end: content.toLowerCase().indexOf(backendSpan.text.toLowerCase()) + backendSpan.text.length,
-            })
-          }
-        })
-        setLocalSpans(merged.sort((a, b) => a.start - b.start))
-      }
+      if (result) {
+        if (result.bias_detection?.language_detected) {
+          setPreprocessing(prev => ({ ...prev, detectedLanguage: result.bias_detection.language_detected }))
+        }
 
-      setAnalysisResult(result)
-      setCurrentStep(4)
-    } catch (error) {
-      console.error('Analysis failed:', error)
-      // ── Even if backend fails, show frontend-only results ──
-      if (localSpans.length > 0) {
-        // Keep what we already detected and show a mock result
-        const mockScore = Math.min(0.95, localSpans.length * 0.12)
+        // Merge backend spans not already covered by local detection
+        if (result.bias_detection?.highlighted_text?.length > 0) {
+          const merged = [...spans]
+          result.bias_detection.highlighted_text.forEach(backendSpan => {
+            if (!backendSpan.text) return
+            const alreadyCovered = spans.some(ls =>
+              ls.text.toLowerCase() === backendSpan.text.toLowerCase()
+            )
+            if (!alreadyCovered) {
+              const idx = content.toLowerCase().indexOf(backendSpan.text.toLowerCase())
+              if (idx !== -1) {
+                merged.push({
+                  text: backendSpan.text,
+                  phrase: backendSpan.text.toLowerCase(),
+                  suggestion: backendSpan.suggestion || 'review needed',
+                  bias_type: backendSpan.bias_type || 'gender_bias',
+                  severity: backendSpan.severity || 'medium',
+                  start: idx,
+                  end: idx + backendSpan.text.length,
+                })
+              }
+            }
+          })
+          const finalSpans = merged.sort((a, b) => a.start - b.start)
+          setLocalSpans(finalSpans)
+          // Regenerate alternative text with all detected spans
+          setAlternativeText(generateAlternativeText(content))
+        }
+
+        setAnalysisResult(result)
+      } else {
+        // Backend failed — build a mock result from frontend detection
+        const mockScore = Math.min(0.95, spans.length * 0.12 + 0.1)
         setAnalysisResult({
           analysis_id: 'local-' + Date.now(),
           bias_detection: {
             bias_scores: {
               overall: mockScore,
-              gender_bias: mockScore * 0.9,
-              stereotype: mockScore * 0.8,
-              language_dominance: 0.1,
+              gender_bias: parseFloat((mockScore * 0.9).toFixed(2)),
+              stereotype: parseFloat((mockScore * 0.7).toFixed(2)),
+              language_dominance: parseFloat((mockScore * 0.3).toFixed(2)),
             },
             explanations: {
-              gender_bias: `${localSpans.filter(s => s.bias_type === 'gender_bias').length} gendered term(s) detected in the text.`,
-              stereotype: `${localSpans.filter(s => s.bias_type === 'stereotype').length} stereotypical pattern(s) identified.`,
-              language_dominance: 'Language detected: ' + language.toUpperCase(),
+              gender_bias: spans.filter(s => s.bias_type === 'gender_bias').length > 0
+                ? `${spans.filter(s => s.bias_type === 'gender_bias').length} gendered term(s) detected.`
+                : 'No explicit gender bias detected.',
+              stereotype: spans.filter(s => s.bias_type === 'stereotype').length > 0
+                ? `${spans.filter(s => s.bias_type === 'stereotype').length} stereotypical pattern(s) found.`
+                : 'No stereotypes detected.',
+              language_dominance: `Language: ${language.toUpperCase()}`,
             },
             highlighted_text: [],
             language_detected: language,
-          }
+          },
+          fairness_metrics: { risk_level: mockScore > 0.6 ? 'high' : mockScore > 0.3 ? 'medium' : 'low', fairness_score: 1 - mockScore },
+          storage_location: 'local',
+          status: 'completed',
         })
-        setCurrentStep(4)
-      } else {
-        alert('Analysis failed. Please ensure backend is running at http://localhost:8000')
-        setCurrentStep(1)
       }
+
+      setCurrentStep(4)
+    } catch (error) {
+      console.error('Analysis failed:', error)
+      setCurrentStep(1)
+      alert('Something went wrong. Please try again.')
     } finally {
       setIsAnalyzing(false)
     }
