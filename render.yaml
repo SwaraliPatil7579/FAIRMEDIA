@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: fairmedia-backend
+    env: python
+    region: oregon
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: STORAGE_MODE
+        value: local
+      - key: API_HOST
+        value: 0.0.0.0
+      - key: LOCAL_STORAGE_PATH
+        value: ./data/audit_logs
+      - key: ALLOWED_ORIGINS
+        value: "*"
+      - key: API_RELOAD
+        value: "False"
+      - key: GEMINI_API_KEY
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false
+    healthCheckPath: /health
