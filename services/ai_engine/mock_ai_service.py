@@ -126,7 +126,8 @@ class MockAIService:
             highlighted_text=highlighted_spans,
             language_detected=language,
             confidence=0.85,
-            model_version="mock-ai-v1.0.0"
+            model_version="mock-ai-v1.0.0",
+            alternative_text=self._generate_alternative_text(content, highlighted_spans)
         )
         
         logger.info(
@@ -238,3 +239,31 @@ class MockAIService:
             return "Some English-centric or culturally specific references present."
         else:
             return "Significant language dominance bias with culturally specific assumptions."
+
+    def _generate_alternative_text(self, content: str, spans: List[HighlightedSpan]) -> str:
+        """
+        Generate a bias-free alternative version of the text by replacing
+        all detected biased spans with their neutral suggestions.
+        Works for any input — URL-fetched, file-uploaded, or pasted text.
+        """
+        if not spans:
+            return content
+
+        # Sort spans by start position descending so replacements don't shift indices
+        sorted_spans = sorted(spans, key=lambda s: s.span[0], reverse=True)
+
+        result = content
+        for span in sorted_spans:
+            if not span.suggestion:
+                continue
+            start, end = span.span[0], span.span[1]
+            if start < 0 or end > len(result) or start >= end:
+                continue
+            original = result[start:end]
+            replacement = span.suggestion
+            # Preserve capitalisation
+            if original and original[0].isupper():
+                replacement = replacement[0].upper() + replacement[1:]
+            result = result[:start] + replacement + result[end:]
+
+        return result

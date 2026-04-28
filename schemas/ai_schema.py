@@ -165,3 +165,8 @@ class AIAnalysisResult(BaseModel):
         description="Version of the AI model used",
         examples=["bert-bias-v1.0.0"]
     )
+
+    alternative_text: Optional[str] = Field(
+        None,
+        description="Bias-free rewritten version of the original text"
+    )

@@ -26,78 +26,97 @@ import {
 // Longest phrases first so multi-word matches win over single words.
 // ─────────────────────────────────────────────────────────────
 const BIAS_REPLACEMENTS = {
-  // ── Multi-word phrases ──────────────────────────────────────
-  "women belong in the kitchen":        "people can work in any field",
-  "women belong in supportive positions":"people can work in any role",
-  "men are the natural leaders":        "people of all genders can lead",
-  "men are natural leaders":            "people of all genders can lead",
-  "natural leaders":                    "capable leaders",
-  "natural leader":                     "capable leader",
-  "boys will be boys":                  "children should be held to equal standards",
-  "boys don't cry":                     "it's okay to express emotions",
-  "man of the house":                   "head of household",
-  "man up":                             "be courageous",
-  "be a man":                           "be strong",
-  "man's job":                          "anyone's job",
-  "woman's place":                      "anyone's place",
-  "like a girl":                        "with effort",
-  "throw like a girl":                  "throw with less force",
-  "weaker sex":                         "all people",
-  "lady doctor":                        "doctor",
-  "lady engineer":                      "engineer",
-  "lady scientist":                     "scientist",
-  "lady lawyer":                        "lawyer",
-  "male nurse":                         "nurse",
-  "working mother":                     "working parent",
-  "career woman":                       "professional",
-  "old maid":                           "unmarried person",
-  "men are better at":                  "individuals vary in their abilities with",
-  "women are too emotional":            "all people experience emotions",
-  "men are naturally":                  "individuals can be naturally",
-  "women are naturally":                "individuals can be naturally",
-  "girls should":                       "all people should",
-  "real men":                           "people",
-  "crumble under stress":               "struggle under pressure",
-  "built for high-pressure":            "suited for demanding",
-  "supportive positions":               "various roles",
-  "breadwinners":                       "providers",
-  "breadwinner":                        "provider",
-  "prioritize family over deadlines":   "balance personal and professional priorities",
-  "somehow managed":                    "managed",
-  "surprisingly sharp":                 "highly capable",
-  "allowing her to":                    "supporting her to",
-  "juggling family responsibilities":   "balancing family responsibilities",
-  "the mother of":                      "a parent of",
+  // ── Racial / ethnic stereotypes ────────────────────────────
+  "young attractive ones":                          "skilled professionals",
+  "asian developers are naturally good at math":    "developers with strong technical skills",
+  "asian developers are naturally good":            "developers with strong skills",
+  "asians are naturally good at math":              "individuals with strong math skills",
+  "asians are good at math":                        "individuals with strong math skills",
+  "african americans excel in creative roles":      "individuals with creative skills",
+  "hispanic workers are hardworking but may have language barriers": "individuals with strong work ethic and language support",
+  "hispanic workers are hardworking":               "dedicated workers",
+  "native english speakers":                        "proficient English speakers",
+  "culturally fit":                                 "aligned with team values",
+  "american values":                                "shared team values",
+  "model minority":                                 "high-achieving individual",
+  "exotic":                                         "unique",
+  "articulate":                                     "well-spoken",
+  "surprisingly articulate":                        "well-spoken",
+  "one of the good ones":                           "a valued colleague",
+  "you speak english so well":                      "you communicate effectively",
+  "where are you really from":                      "what is your background",
+  // ── Multi-word gender phrases ───────────────────────────────
+  "women belong in the kitchen":                    "people can work in any field",
+  "women belong in supportive positions":           "people can work in any role",
+  "men are the natural leaders":                    "people of all genders can lead",
+  "men are natural leaders":                        "people of all genders can lead",
+  "natural leaders":                                "capable leaders",
+  "natural leader":                                 "capable leader",
+  "boys will be boys":                              "children should be held to equal standards",
+  "boys don't cry":                                 "it's okay to express emotions",
+  "man of the house":                               "head of household",
+  "man up":                                         "be courageous",
+  "be a man":                                       "be strong",
+  "man's job":                                      "anyone's job",
+  "woman's place":                                  "anyone's place",
+  "like a girl":                                    "with effort",
+  "throw like a girl":                              "throw with less force",
+  "weaker sex":                                     "all people",
+  "lady doctor":                                    "doctor",
+  "lady engineer":                                  "engineer",
+  "lady scientist":                                 "scientist",
+  "lady lawyer":                                    "lawyer",
+  "male nurse":                                     "nurse",
+  "working mother":                                 "working parent",
+  "career woman":                                   "professional",
+  "old maid":                                       "unmarried person",
+  "men are better at":                              "individuals vary in their abilities with",
+  "women are too emotional":                        "all people experience emotions",
+  "men are naturally":                              "individuals can be naturally",
+  "women are naturally":                            "individuals can be naturally",
+  "girls should":                                   "all people should",
+  "real men":                                       "people",
+  "crumble under stress":                           "struggle under pressure",
+  "built for high-pressure":                        "suited for demanding",
+  "supportive positions":                           "various roles",
+  "breadwinners":                                   "providers",
+  "breadwinner":                                    "provider",
+  "prioritize family over deadlines":               "balance personal and professional priorities",
+  "somehow managed":                                "managed",
+  "surprisingly sharp":                             "highly capable",
+  "allowing her to":                                "supporting her to",
+  "juggling family responsibilities":               "balancing family responsibilities",
+  "the mother of":                                  "a parent of",
   // ── Single words ───────────────────────────────────────────
-  "chairman":   "chairperson",
-  "fireman":    "firefighter",
-  "policeman":  "police officer",
-  "businessman":"businessperson",
-  "spokesman":  "spokesperson",
-  "mailman":    "mail carrier",
-  "cameraman":  "camera operator",
-  "salesman":   "salesperson",
-  "foreman":    "supervisor",
-  "mankind":    "humankind",
-  "manpower":   "workforce",
-  "housewife":  "homemaker",
-  "tomboy":     "active child",
-  "emotional":  "expressive",
-  "hysterical": "upset",
-  "nurturing":  "caring",
-  "ditzy":      "thoughtful",
-  "nagging":    "persistent",
-  "catfight":   "disagreement",
-  "aggressive": "assertive",
-  "dominant":   "leading",
-  "stubborn":   "persistent",
+  "chairman":    "chairperson",
+  "fireman":     "firefighter",
+  "policeman":   "police officer",
+  "businessman": "businessperson",
+  "spokesman":   "spokesperson",
+  "mailman":     "mail carrier",
+  "cameraman":   "camera operator",
+  "salesman":    "salesperson",
+  "foreman":     "supervisor",
+  "mankind":     "humankind",
+  "manpower":    "workforce",
+  "housewife":   "homemaker",
+  "tomboy":      "active child",
+  "emotional":   "expressive",
+  "hysterical":  "upset",
+  "nurturing":   "caring",
+  "ditzy":       "thoughtful",
+  "nagging":     "persistent",
+  "catfight":    "disagreement",
+  "aggressive":  "assertive",
+  "dominant":    "leading",
+  "stubborn":    "persistent",
   // ── Hindi phrases ──────────────────────────────────────────
-  "औरतों का काम":       "घर का काम",
-  "मर्दानगी":           "साहस",
-  "पराया धन":           "बेटी",
-  "पति परमेश्वर":       "जीवन साथी",
-  "कमजोर लिंग":        "व्यक्ति",
-  "अबला नारी":          "महिला",
+  "औरतों का काम":            "घर का काम",
+  "मर्दानगी":                "साहस",
+  "पराया धन":                "बेटी",
+  "पति परमेश्वर":            "जीवन साथी",
+  "कमजोर लिंग":             "व्यक्ति",
+  "अबला नारी":               "महिला",
   "लड़के रोते नहीं":    "भावनाएं स्वाभाविक हैं",
   "मर्द को दर्द नहीं होता": "सभी को दर्द होता है",
 }
@@ -223,6 +242,31 @@ function generateAlternativeText(originalText) {
         return replacement[0].toUpperCase() + replacement.slice(1)
       }
       return replacement
+    })
+  })
+
+  return altText
+}
+
+// ─────────────────────────────────────────────────────────────
+// Generate alternative text from detected spans (uses span
+// suggestions for terms not in the local dictionary)
+// ─────────────────────────────────────────────────────────────
+function generateAlternativeTextFromSpans(originalText, spans) {
+  if (!originalText || !spans || spans.length === 0) return originalText
+
+  // First apply dictionary replacements
+  let altText = generateAlternativeText(originalText)
+
+  // Then apply any backend suggestions for terms not in dictionary
+  spans.forEach(span => {
+    if (!span.suggestion || BIAS_REPLACEMENTS[span.phrase]) return
+    const regex = new RegExp(span.phrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi')
+    altText = altText.replace(regex, (match) => {
+      if (match[0] === match[0].toUpperCase() && match[0] !== match[0].toLowerCase()) {
+        return span.suggestion[0].toUpperCase() + span.suggestion.slice(1)
+      }
+      return span.suggestion
     })
   })
 
@@ -360,6 +404,12 @@ function ContentAnalyzer() {
           setPreprocessing(prev => ({ ...prev, detectedLanguage: result.bias_detection.language_detected }))
         }
 
+        // Use backend-generated alternative text if available (works for any input)
+        const backendAltText = result.bias_detection?.alternative_text
+        if (backendAltText && backendAltText !== content) {
+          setAlternativeText(backendAltText)
+        }
+
         // Merge backend spans not already covered by local detection
         if (result.bias_detection?.highlighted_text?.length > 0) {
           const merged = [...spans]
@@ -374,7 +424,7 @@ function ContentAnalyzer() {
                 merged.push({
                   text: backendSpan.text,
                   phrase: backendSpan.text.toLowerCase(),
-                  suggestion: backendSpan.suggestion || 'review needed',
+                  suggestion: backendSpan.suggestion || null,
                   bias_type: backendSpan.bias_type || 'gender_bias',
                   severity: backendSpan.severity || 'medium',
                   start: idx,
@@ -385,8 +435,15 @@ function ContentAnalyzer() {
           })
           const finalSpans = merged.sort((a, b) => a.start - b.start)
           setLocalSpans(finalSpans)
-          // Regenerate alternative text with all detected spans
-          setAlternativeText(generateAlternativeText(content))
+          // If backend didn't provide alt text, build from all spans
+          if (!backendAltText || backendAltText === content) {
+            setAlternativeText(generateAlternativeTextFromSpans(content, finalSpans))
+          }
+        } else {
+          // No backend spans — use dictionary-generated alt text
+          if (!backendAltText || backendAltText === content) {
+            setAlternativeText(generateAlternativeText(content))
+          }
         }
 
         setAnalysisResult(result)
