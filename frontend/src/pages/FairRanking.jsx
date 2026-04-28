@@ -44,7 +44,6 @@ function FairRanking() {
   // ── Summary stats ─────────────────────────────────────────────────────────
   const movedDown  = afterRanking.filter(i => i.rankChange < 0).length
   const movedUp    = afterRanking.filter(i => i.rankChange > 0).length
-  const unchanged  = afterRanking.filter(i => i.rankChange === 0).length
 
   const avgBiasBefore = beforeRanking.length
     ? beforeRanking.reduce((s, i) => s + i.biasScore, 0) / beforeRanking.length

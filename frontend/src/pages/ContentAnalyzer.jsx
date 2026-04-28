@@ -152,16 +152,18 @@ function detectBiasSpansLocally(text) {
          'juggling family'].some(s => lowerPhrase.includes(s))
       ) biasType = 'stereotype'
 
+      const matchedText = match[0]
+      const suggestion = (() => {
+        if (matchedText[0] === matchedText[0].toUpperCase() && matchedText[0] !== matchedText[0].toLowerCase()) {
+          return replacement[0].toUpperCase() + replacement.slice(1)
+        }
+        return replacement
+      })()
+
       spans.push({
-        text: match[0],           // original matched text (preserves case)
-        phrase,                    // lowercase key used
-        suggestion: (() => {
-          // Preserve capitalisation of replacement
-          if (match[0][0] === match[0][0].toUpperCase() && match[0][0] !== match[0][0].toLowerCase()) {
-            return replacement[0].toUpperCase() + replacement.slice(1)
-          }
-          return replacement
-        })(),
+        text: matchedText,
+        phrase,
+        suggestion,
         bias_type: biasType,
         severity: phrase.split(' ').length > 2 ? 'high' : 'medium',
         start,

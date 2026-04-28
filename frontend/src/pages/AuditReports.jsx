@@ -3,7 +3,6 @@ import {
   FileText,
   Download,
   Share2,
-  TrendingUp,
   AlertCircle,
   CheckCircle,
   BarChart3

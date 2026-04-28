@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Sparkles, Shield, Zap, Brain, CheckCircle, LayoutDashboard } from 'lucide-react'
+import { Sparkles, Shield, Zap, Brain, CheckCircle } from 'lucide-react'
 
 function LoadingScreen({ onComplete }) {
   const [progress, setProgress] = useState(0)
@@ -56,7 +56,7 @@ function LoadingScreen({ onComplete }) {
       clearInterval(interval)
       clearInterval(stepInterval)
     }
-  }, [])
+  }, [onComplete, steps.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const CurrentIcon = steps[currentStep]?.icon || Brain
 
