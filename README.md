@@ -332,7 +332,3 @@ docker run -p 8080:8080 --env-file .env fairmedia
 - [ ] Team review workflows
 
 ---
-
-## License
-
-MIT
