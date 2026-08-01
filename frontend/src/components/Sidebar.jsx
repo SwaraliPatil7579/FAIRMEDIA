@@ -147,7 +147,7 @@ function Sidebar({ currentPage, onNavigate, pendingReviews, collapsed, onToggleC
           <div className="text-xs text-gray-600">
             <div className="flex justify-between mb-1">
               <span>Version</span>
-              <span className="font-semibold text-gray-700">1.0.0</span>
+              <span className="font-semibold text-gray-700">2.0.0</span>
             </div>
             <div className="flex justify-between">
               <span>Status</span>

@@ -31,6 +31,70 @@ class BiasScores(BaseModel):
         examples=[0.42]
     )
     
+    age_bias: Optional[float] = Field(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="Age bias score (ageism)",
+        examples=[0.35]
+    )
+    
+    disability_bias: Optional[float] = Field(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="Disability bias score (ableism)",
+        examples=[0.28]
+    )
+    
+    religious_bias: Optional[float] = Field(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="Religious bias score",
+        examples=[0.22]
+    )
+    
+    socioeconomic_bias: Optional[float] = Field(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="Socioeconomic bias score (classism)",
+        examples=[0.31]
+    )
+
+    racial_ethnic_bias: Optional[float] = Field(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="Racial or ethnic bias score",
+        examples=[0.34]
+    )
+
+    caste_bias: Optional[float] = Field(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="Caste or tribe/community bias score",
+        examples=[0.27]
+    )
+
+    body_bias: Optional[float] = Field(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="Body size, appearance, or weight bias score",
+        examples=[0.29]
+    )
+
+    nationality_bias: Optional[float] = Field(
+        0.0,
+        ge=0.0,
+        le=1.0,
+        description="Nationality, immigration, or origin bias score",
+        examples=[0.25]
+    )
+    
     language_dominance: float = Field(
         ...,
         ge=0.0,

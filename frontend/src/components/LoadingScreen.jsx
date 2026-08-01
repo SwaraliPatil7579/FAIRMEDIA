@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Sparkles, Shield, Zap, Brain, CheckCircle } from 'lucide-react'
 
+// Defined outside the component so the array reference is stable across renders.
+// This avoids the need for eslint-disable on the useEffect dependency array.
+const LOADING_STEPS = [
+  { icon: Brain,       label: 'Initializing AI Engine',      color: 'text-blue-600' },
+  { icon: Shield,      label: 'Loading Bias Detection',      color: 'text-purple-600' },
+  { icon: Zap,         label: 'Activating Fairness Metrics', color: 'text-green-600' },
+  { icon: Sparkles,    label: 'Preparing Interface',         color: 'text-orange-600' },
+  { icon: CheckCircle, label: 'System Ready',                color: 'text-indigo-600' },
+]
+
 function LoadingScreen({ onComplete }) {
   const [progress, setProgress] = useState(0)
   const [currentStep, setCurrentStep] = useState(0)
   const [particles, setParticles] = useState([])
-
-  const steps = [
-    { icon: Brain, label: 'Initializing AI Engine', color: 'text-blue-600' },
-    { icon: Shield, label: 'Loading Bias Detection', color: 'text-purple-600' },
-    { icon: Zap, label: 'Activating Fairness Metrics', color: 'text-green-600' },
-    { icon: Sparkles, label: 'Preparing Interface', color: 'text-orange-600' },
-    { icon: CheckCircle, label: 'System Ready', color: 'text-indigo-600' },
-  ]
 
   useEffect(() => {
     // Generate floating particles
@@ -26,9 +28,9 @@ function LoadingScreen({ onComplete }) {
     }))
     setParticles(newParticles)
 
-    // Progress animation
+    // Progress animation — LOADING_STEPS is module-level so it's stable
     const duration = 3500 // 3.5 seconds total
-    const stepDuration = duration / steps.length
+    const stepDuration = duration / LOADING_STEPS.length
     const interval = setInterval(() => {
       setProgress((prev) => {
         const next = prev + 1
@@ -44,7 +46,7 @@ function LoadingScreen({ onComplete }) {
     // Step progression
     const stepInterval = setInterval(() => {
       setCurrentStep((prev) => {
-        if (prev >= steps.length - 1) {
+        if (prev >= LOADING_STEPS.length - 1) {
           clearInterval(stepInterval)
           return prev
         }
@@ -56,9 +58,9 @@ function LoadingScreen({ onComplete }) {
       clearInterval(interval)
       clearInterval(stepInterval)
     }
-  }, [onComplete, steps.length]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [onComplete]) // LOADING_STEPS is module-level — stable reference, not a dependency
 
-  const CurrentIcon = steps[currentStep]?.icon || Brain
+  const CurrentIcon = LOADING_STEPS[currentStep]?.icon || Brain
 
   return (
     <div className="fixed inset-0 bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 flex items-center justify-center overflow-hidden z-50">
@@ -138,7 +140,7 @@ function LoadingScreen({ onComplete }) {
 
         {/* Loading Steps - Clean Design */}
         <div className="mb-8 space-y-2 max-w-md mx-auto">
-          {steps.map((step, index) => {
+          {LOADING_STEPS.map((step, index) => {
             const StepIcon = step.icon
             const isActive = index === currentStep
             const isComplete = index < currentStep

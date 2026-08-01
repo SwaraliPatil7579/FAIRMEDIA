@@ -21,6 +21,10 @@ const DEFAULT_SETTINGS = {
   biasThreshold: 0.5,
   genderBiasThreshold: 0.6,
   stereotypeThreshold: 0.5,
+  ageBiasThreshold: 0.5,
+  disabilityBiasThreshold: 0.5,
+  religiousBiasThreshold: 0.5,
+  socioeconomicBiasThreshold: 0.5,
   languageDominanceThreshold: 0.4,
   humanReviewRequired: true,
   autoApprove: false,
@@ -105,7 +109,7 @@ function Settings() {
                   <Sparkles className="w-4 h-4 text-white" />
                 </div>
                 <div className="flex-1">
-                  <p className="text-sm font-semibold text-blue-900">Google Gemini 1.5 Flash — Active</p>
+                  <p className="text-sm font-semibold text-blue-900">Google Gemini 2.0 Flash — Active</p>
                   <p className="text-xs text-blue-600">Powered by Google AI Studio · Real LLM bias detection</p>                </div>
                 <span className="flex items-center gap-1 text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">
                   <Zap className="w-3 h-3" /> Live
@@ -117,14 +121,18 @@ function Settings() {
                 value={settings.selectedModel}
                 onChange={(e) => update('selectedModel', e.target.value)}
               >
-                <option value="gemini">Google Gemini 1.5 Flash — Active ✅</option>
+                <option value="gemini">Google Gemini 2.0 Flash Lite — Active ✅</option>
                 <option value="indicbert">IndicBERT (Multilingual)</option>
                 <option value="bert">BERT Base</option>
                 <option value="distilbert">DistilBERT (Faster)</option>
                 <option value="roberta">RoBERTa (Higher Accuracy)</option>
               </select>
               <p className="text-xs text-gray-500 mt-1">
-                Google Gemini provides real AI-powered bias detection with native Hindi + English support
+                Google Gemini provides real AI-powered bias detection with native Hindi + English support.
+              </p>
+              <p className="text-xs text-amber-700 mt-1 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                ⚠️ The backend always uses its configured model (Gemini → Groq → offline fallback).
+                Model selection here is saved as a UI preference for future backend integration.
               </p>
             </div>
 
@@ -201,45 +209,29 @@ function Settings() {
 
             {/* Per-Type Thresholds */}
             <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">
-                  Gender Bias
-                  <span className="ml-2 font-bold text-blue-600">{settings.genderBiasThreshold.toFixed(1)}</span>
-                </label>
-                <input
-                  type="range"
-                  min="0" max="1" step="0.1"
-                  value={settings.genderBiasThreshold}
-                  onChange={(e) => update('genderBiasThreshold', parseFloat(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">
-                  Stereotype
-                  <span className="ml-2 font-bold text-blue-600">{settings.stereotypeThreshold.toFixed(1)}</span>
-                </label>
-                <input
-                  type="range"
-                  min="0" max="1" step="0.1"
-                  value={settings.stereotypeThreshold}
-                  onChange={(e) => update('stereotypeThreshold', parseFloat(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium text-gray-700 block mb-2">
-                  Language Dominance
-                  <span className="ml-2 font-bold text-blue-600">{settings.languageDominanceThreshold.toFixed(1)}</span>
-                </label>
-                <input
-                  type="range"
-                  min="0" max="1" step="0.1"
-                  value={settings.languageDominanceThreshold}
-                  onChange={(e) => update('languageDominanceThreshold', parseFloat(e.target.value))}
-                  className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                />
-              </div>
+              {[
+                { key: 'genderBiasThreshold',       label: 'Gender Bias' },
+                { key: 'stereotypeThreshold',        label: 'Stereotype' },
+                { key: 'ageBiasThreshold',           label: 'Age Bias' },
+                { key: 'disabilityBiasThreshold',    label: 'Disability Bias' },
+                { key: 'religiousBiasThreshold',     label: 'Religious Bias' },
+                { key: 'socioeconomicBiasThreshold', label: 'Socioeconomic' },
+                { key: 'languageDominanceThreshold', label: 'Language Dominance' },
+              ].map(({ key, label }) => (
+                <div key={key}>
+                  <label className="text-sm font-medium text-gray-700 block mb-2">
+                    {label}
+                    <span className="ml-2 font-bold text-blue-600">{(settings[key] || 0.5).toFixed(1)}</span>
+                  </label>
+                  <input
+                    type="range"
+                    min="0" max="1" step="0.1"
+                    value={settings[key] || 0.5}
+                    onChange={(e) => update(key, parseFloat(e.target.value))}
+                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                  />
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -290,6 +282,8 @@ function Settings() {
               <p className="text-sm font-medium text-yellow-800 mb-1">⚠️ Governance Policy</p>
               <p className="text-xs text-yellow-700">
                 Changes to governance settings are saved locally and will be logged in the audit trail upon save.
+                Threshold and auto-approve settings are stored as preferences — the analysis pipeline reads
+                these values when making review decisions.
               </p>
             </div>
           </div>

@@ -2,6 +2,6 @@
 API routes package.
 """
 
-from backend.routes import analyze
+from backend.routes import analyze, fetch_url, batch_analyze
 
-__all__ = ['analyze']
+__all__ = ['analyze', 'fetch_url', 'batch_analyze']

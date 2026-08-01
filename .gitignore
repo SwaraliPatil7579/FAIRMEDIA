@@ -47,3 +47,22 @@ htmlcov/
 build/
 dist/
 *.egg-info/
+
+# Docs / research / sample files (internal only)
+docs/
+ARCHITECTURE.md
+DEMO_SAMPLES.md
+pytest.ini
+
+# Diagrams and images at root (not needed in repo)
+/*.png
+
+# Zip archives
+*.zip
+
+# Legacy infra / cloud-specific configs
+infra/
+requirements-google.txt
+
+# Test suite (internal development only)
+tests/

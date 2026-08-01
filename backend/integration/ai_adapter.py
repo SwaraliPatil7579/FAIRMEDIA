@@ -1,7 +1,7 @@
 """
 Adapter for AI Service.
-Routes all bias detection through Google Gemini (AI Studio) with
-automatic fallback to rule-based MockAIService if key is unavailable.
+Routes all bias detection through Unified AI Service with automatic fallback:
+Gemini → Groq → Mock
 """
 
 import os
@@ -15,13 +15,13 @@ logger = logging.getLogger(__name__)
 class AIAdapter:
     """
     Central adapter for AI bias detection.
-    Uses Google Gemini when GEMINI_API_KEY is set, otherwise falls back to mock.
+    Uses Unified AI Service with intelligent fallback chain.
     """
 
     def __init__(self):
-        from services.ai_engine.ai_service_wrapper import AIService
-        self.ai_service = AIService()
-        logger.info(f"🤖 AI Adapter initialized — model: {self.ai_service.current_model}")
+        from services.ai_engine.unified_ai_service import UnifiedAIService
+        self.ai_service = UnifiedAIService()
+        logger.info(f"🤖 AI Adapter initialized — model: {self.ai_service.get_active_model()}")
 
     async def analyze_bias(
         self,
@@ -30,7 +30,7 @@ class AIAdapter:
         language: Optional[str] = None
     ) -> AIAnalysisResult:
         """
-        Analyze content for bias using the configured AI model.
+        Analyze content for bias using the best available AI model.
 
         Args:
             content: Text to analyze
@@ -42,7 +42,7 @@ class AIAdapter:
         """
         logger.info(
             f"🤖 AI Adapter: Analyzing [{analysis_id}] "
-            f"via {self.ai_service.current_model} "
+            f"via {self.ai_service.get_active_model()} "
             f"({len(content)} chars)"
         )
 
@@ -56,14 +56,6 @@ class AIAdapter:
         )
         return result
 
-    async def health_check(self) -> bool:
-        """Check if the AI service is healthy."""
-        try:
-            return await self.ai_service.health_check()
-        except Exception as e:
-            logger.warning(f"⚠️ AI health check failed: {e}")
-            return False
-
     @property
     def active_model(self) -> str:
-        return self.ai_service.current_model
+        return self.ai_service.get_active_model()

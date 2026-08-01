@@ -113,10 +113,10 @@ function AuditReports() {
                   .writeText(JSON.stringify(payload, null, 2))
                   .then(() => alert('Audit summary copied to clipboard.'))
               }}
-              className="bg-blue-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
+              className="bg-purple-600 text-white px-4 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-all shadow-md hover:shadow-lg flex items-center gap-2"
             >
               <Share2 className="w-4 h-4" />
-              API Share
+              Copy Summary
             </button>
           </div>
         </div>
@@ -127,7 +127,7 @@ function AuditReports() {
             <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
               <BarChart3 className="w-6 h-6 text-blue-600" />
             </div>
-            <h2 className="text-xl font-semibold">Fairness Metrics (AIF360)</h2>
+            <h2 className="text-xl font-semibold">Fairness Metrics</h2>
           </div>
           <div className="grid grid-cols-3 gap-4">
             {fairnessMetrics.map((metric, index) => (
@@ -222,7 +222,7 @@ function AuditReports() {
                     </td>
                     <td className="px-4 py-3 text-sm uppercase">{a.language}</td>
                     <td className="px-4 py-3 text-sm font-semibold">
-                      {a.bias_score.toFixed(2)}
+                      {(a.bias_score ?? 0).toFixed(2)}
                     </td>
                     <td className="px-4 py-3 text-sm">{a.risk_level}</td>
                     <td className="px-4 py-3 text-sm">

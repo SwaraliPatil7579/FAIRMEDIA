@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import { getAnalyses } from '../utils/analysisStorage'
 import {
   TrendingUp,
@@ -11,17 +12,26 @@ import {
 } from 'lucide-react'
 
 function FairRanking() {
-  const analyses = getAnalyses()
+  const [analyses, setAnalyses] = useState([])
+
+  useEffect(() => {
+    setAnalyses(getAnalyses())
+  }, [])
 
   // ── Build ranked lists ────────────────────────────────────────────────────
   // "Before" = sorted purely by relevance (1 - bias_score), bias ignored
-  const withScores = analyses.map((a, index) => ({
-    id: a.id,
-    title: (a.content || '').slice(0, 70).trim() || 'Untitled',
-    biasScore: parseFloat((a.bias_score ?? 0).toFixed(2)),
-    relevanceScore: parseFloat((1 - (a.bias_score ?? 0)).toFixed(2)),
-    originalIndex: index,
-  }))
+  const withScores = analyses.map((a, index) => {
+    const raw = (a.content || '').trim()
+    const truncated = raw.length > 70
+    return {
+      id: a.id,
+      title: raw.slice(0, 70) || 'Untitled',
+      titleSuffix: truncated ? '…' : '',
+      biasScore: parseFloat((a.bias_score ?? 0).toFixed(2)),
+      relevanceScore: parseFloat((1 - (a.bias_score ?? 0)).toFixed(2)),
+      originalIndex: index,
+    }
+  })
 
   const beforeRanking = [...withScores]
     .sort((a, b) => b.relevanceScore - a.relevanceScore)
@@ -150,9 +160,19 @@ function FairRanking() {
               <p className="text-sm text-gray-600 font-medium">Bias Reduction</p>
             </div>
             <p className="text-3xl font-bold text-purple-600">
-              {biasReductionPct > 0 ? `${biasReductionPct}%` : '—'}
+              {biasReductionPct > 0
+                ? `${biasReductionPct}%`
+                : biasReductionPct < 0
+                ? `${biasReductionPct}%`
+                : '—'}
             </p>
-            <p className="text-xs text-gray-400 mt-1">in top-half avg bias</p>
+            <p className="text-xs text-gray-400 mt-1">
+              {biasReductionPct > 0
+                ? 'in top-half avg bias'
+                : biasReductionPct < 0
+                ? 'top-half bias increased'
+                : 'no change'}
+            </p>
           </div>
         </div>
 
@@ -188,7 +208,7 @@ function FairRanking() {
                         {item.beforeRank}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-800 truncate">{item.title}…</p>
+                        <p className="text-sm text-gray-800 truncate">{item.title}{item.titleSuffix}</p>
                         <p className="text-xs text-gray-400 mt-0.5">Relevance score: {item.relevanceScore.toFixed(2)}</p>
                       </div>
                       <span className={`text-xs font-medium px-2 py-1 rounded-full border shrink-0 ${bias.color}`}>
@@ -220,7 +240,7 @@ function FairRanking() {
                         {item.afterRank}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm text-gray-800 truncate">{item.title}…</p>
+                        <p className="text-sm text-gray-800 truncate">{item.title}{item.titleSuffix}</p>
                         <p className="text-xs text-gray-400 mt-0.5">
                           Fair score: {item.fairScore.toFixed(2)}
                           <span className="mx-1 text-gray-300">|</span>

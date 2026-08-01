@@ -1,278 +1,94 @@
-# FAIRMEDIA  
-## AI-Powered Bias Audit & Responsible Content Ranking System  
-### 🌟 Powered by Google Gemini AI
+# FAIRMEDIA
 
-> **Reducing algorithmic bias without altering reality.**
+**AI-Powered Bias Audit and Mitigation System**
 
-[![Google Gemini](https://img.shields.io/badge/Google%20Gemini-2.0%20Flash-4285F4.svg)](https://ai.google.dev/)
-[![Python](https://img.shields.io/badge/Python-3.9+-blue.svg)](https://www.python.org/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104+-green.svg)](https://fastapi.tiangolo.com/)
-[![React](https://img.shields.io/badge/React-18.2+-61DAFB.svg)](https://reactjs.org/)
-[![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+FAIRMEDIA detects and explains bias in text content across 7 categories — gender, stereotype, age, disability, religious, socioeconomic, and language dominance — using a smart AI fallback chain (Gemini → Groq → rule-based).
 
 ---
 
-## 🚨 Problem
+## 🌐 Live Deployments
 
-Modern AI systems learn from biased internet data containing:
-
-- **Gender bias** - Stereotypical gender roles and gendered language
-- **Stereotypes** - Cultural, racial, and occupational biases
-- **Language dominance** - English-centric and culturally dominant patterns
-- **Under-representation** - Marginalized communities and perspectives
-
-This leads to **algorithmic discrimination**, unfair ranking, and distorted digital visibility.
+| Service | URL |
+|---|---|
+| **Web App (Frontend)** | https://fairmedia.vercel.app |
+| **API (Backend)** | https://fairmedia.onrender.com |
+| **API Docs (Swagger)** | https://fairmedia.onrender.com/docs |
+| **Health Check** | https://fairmedia.onrender.com/health |
 
 ---
 
-## 💡 Solution
+## 🧩 Browser Extension
 
-**FAIRMEDIA** is a **Responsible AI system** powered by **Google Gemini 2.0** that:
+Analyze any webpage for bias with one click, directly from your browser toolbar.
 
-✅ **Google Gemini AI** - Advanced bias detection using Google's latest LLM  
-✅ Detects bias using **NLP + Machine Learning**  
-✅ Provides **Explainable AI (XAI) bias scores**  
-✅ Applies **Smart Re-weighting algorithms**  
-✅ Enables **Fairness-aware content ranking**  
-✅ Maintains **Human-in-the-Loop oversight**  
-✅ Supports **Multilingual & regional language inclusion**  
-✅ **Intelligent Fallback Chain**: Gemini → Groq (LLaMA 3) → Rule-based  
+### Install on Chrome / Edge
 
-⚠️ We do **NOT** edit or delete content.  
-✅ We reduce bias at the **AI decision layer**, not the content layer.
+1. Download or clone this repository
+2. Open `chrome://extensions/` in Chrome (or `edge://extensions/` in Edge)
+3. Enable **Developer mode** (toggle in the top-right corner)
+4. Click **Load unpacked**
+5. Select the `browser-extension/` folder from this repo
+6. The FAIRMEDIA icon appears in your toolbar — click it on any page to analyze
+
+### Install on Firefox
+
+1. Open `about:debugging#/runtime/this-firefox`
+2. Click **Load Temporary Add-on**
+3. Navigate to `browser-extension/` and select `manifest.json`
+
+### What it does
+
+- **One-click page analysis** — extracts page text and sends it to the API
+- **Context menu** — right-click any selected text → "Analyze for Bias"
+- **Score breakdown** — shows all 7 bias category scores with color-coded bars
+- **Inline highlights** — marks biased phrases directly on the page
+- **View full report** — opens the web app with detailed analysis
+
+> The extension points to the production API (`https://fairmedia.onrender.com`) by default. You can change the API URL in the extension popup settings.
 
 ---
 
-## 🌟 Google Gemini AI Integration
+## ✨ Features
 
-### Primary AI Model: Google Gemini 2.0 Flash Lite
-- ✅ **Advanced Bias Detection** - Powered by Google's latest multimodal LLM
-- ✅ **Context-Aware Analysis** - Deep understanding of nuanced language patterns
-- ✅ **Real-time Processing** - Fast inference with Google AI Studio
-- ✅ **FREE Tier** - No Google Cloud account required, uses AI Studio API
-- ✅ **Intelligent Fallback** - Automatic switch to Groq (LLaMA 3) if quota exceeded
-- ✅ **Zero Downtime** - Rule-based fallback ensures continuous service
-
-### How It Works
-1. **Primary**: Google Gemini analyzes content for bias patterns
-2. **Fallback**: If Gemini quota exceeded → Groq LLaMA 3 takes over
-3. **Safety Net**: If both fail → Rule-based system ensures response
-
-### Future Google Cloud Enhancements
-- 🔄 **Vertex AI** - Custom bias detection models
-- 🔄 **BigQuery** - Analytics and trend analysis
-- 🔄 **Cloud Translation** - 100+ language support
-- 🔄 **Firestore** - Real-time monitoring
-- 🔄 **Pub/Sub** - Event-driven alerts
-
-**Current Status**: Running with **Google Gemini 2.0 Flash Lite** via AI Studio (FREE)
+- Single content bias analysis
+- Batch analysis (CSV / multiple texts)
+- Live editor with real-time bias highlighting as you type
+- URL content fetching — paste a URL, the backend extracts the text
+- AI-powered detection with Gemini → Groq → rule-based fallback chain
+- 7 bias category scores + overall score
+- Highlighted biased text spans with severity
+- Bias explanations and inclusive alternative suggestions
+- Fairness score and risk-level calculation
+- Mitigation weight generation for fair ranking
+- Audit log storage for every analysis
+- React dashboard: analyzer, live editor, batch, scores, review, ranking, reports, metrics, settings
 
 ---
 
 ## 🏗️ Architecture
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    React Frontend                        │
-│              (Interactive Bias Analysis UI)              │
-│                     Port 3000                            │
-└──────────────────────┬──────────────────────────────────┘
-                       │ REST API
-                       ▼
-┌─────────────────────────────────────────────────────────┐
-│                  FastAPI Backend                         │
-│            (Pipeline Controller & API)                   │
-│                     Port 8000                            │
-└──────────┬──────────────┬──────────────┬────────────────┘
-           │              │              │
-           ▼              ▼              ▼
-    ┌──────────┐   ┌──────────┐   ┌──────────┐
-    │   AI     │   │ Fairness │   │ Storage  │
-    │ Service  │   │  Engine  │   │ Adapter  │
-    │          │   │          │   │          │
-    │ • Gemini │   │ • Risk   │   │ • Local  │
-    │ • Groq   │   │ • Weights│   │ • AWS    │
-    │ • Mock   │   │ • Metrics│   │ • Cloud  │
-    └──────────┘   └──────────┘   └──────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────┐
-│              Google Gemini 2.0 Flash Lite                │
-│                  (via AI Studio API)                     │
-│         Primary AI Model for Bias Detection              │
-└─────────────────────────────────────────────────────────┘
+Browser Extension / Web App (Vercel)
+          │
+          ▼
+  FastAPI Backend (Render)
+  https://fairmedia.onrender.com
+          │
+          ▼
+  Pipeline Controller
+  (orchestrates all services)
+    ┌─────┴────────┬──────────────┐
+    ▼              ▼              ▼
+AI Adapter   Fairness Adapter  Storage Adapter
+    │              │              │
+    ▼              ▼              ▼
+Unified AI     Fairness       Audit Logs
+Service        Engine         (local JSON)
+  │
+  ├─ 1. Google Gemini 2.0 Flash  (primary)
+  ├─ 2. Groq LLaMA 3.3 70B       (fallback)
+  └─ 3. Rule-based mock           (always available)
 ```
-
----
-
-## ⚙️ Core Modules
-
-### 1. **Bias Detection Engine** (Powered by Google Gemini)
-- **Google Gemini 2.0** - Primary AI model for advanced bias detection
-- NLP-based gender & language bias detection
-- Pattern matching for stereotypes
-- Language dominance analysis
-- Intelligent fallback to Groq LLaMA 3 and rule-based systems
-
-### 2. **Explainable Bias Scoring**
-- Transparent word-level explanations
-- Highlighted text spans showing bias sources
-- Confidence scores and severity levels
-- Multiple bias type categorization
-
-### 3. **Smart Re-weighting (ML-Based)**
-- Fair influence adjustment algorithms
-- Risk-based weight calculation
-- Minimum weight thresholds
-- Rationale generation for adjustments
-
-### 4. **Fair Content Ranking**
-- Bias-aware re-ranking system
-- Fairness score calculation
-- Detailed metrics per bias type
-- Actionable recommendations
-
-### 5. **Human Approval Layer**
-- Ethical control mechanism
-- Audit log storage
-- Review workflow support
-- Complete analysis history
-
----
-
-## 🚀 Quick Start
-
-### Prerequisites
-
-- Python 3.9+
-- Node.js 16+
-- Git
-
-### Installation
-
-```bash
-# Clone repository
-git clone <repository-url>
-cd FAIRMEDIA
-
-# Backend setup
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-
-# Frontend setup
-cd frontend
-npm install
-cd ..
-
-# Configure environment
-cp .env.example .env
-# Edit .env with your settings
-```
-
-### Run Application
-
-```bash
-# Option 1: Use startup script (Linux/Mac)
-./run_local.sh
-
-# Option 2: Manual startup
-# Terminal 1 - Backend
-python backend/main.py
-
-# Terminal 2 - Frontend
-cd frontend && npm start
-```
-
-### Access
-
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:8000
-- **API Docs**: http://localhost:8000/docs
-
----
-
-## 📡 API Usage
-
-### Analyze Content
-
-```bash
-curl -X POST http://localhost:8000/api/v1/analyze \
-  -H "Content-Type: application/json" \
-  -d '{
-    "content": "The CEO announced that his company will hire more female engineers.",
-    "language": "en"
-  }'
-```
-
-### Response
-
-```json
-{
-  "analysis_id": "550e8400-e29b-41d4-a716-446655440000",
-  "timestamp": "2024-02-28T10:35:42Z",
-  "bias_detection": {
-    "bias_scores": {
-      "gender_bias": 0.65,
-      "stereotype": 0.42,
-      "language_dominance": 0.28,
-      "overall": 0.52
-    },
-    "explanations": {
-      "gender_bias": "Gendered language patterns detected",
-      "stereotype": "Stereotypical associations identified",
-      "language_dominance": "English-centric references found"
-    },
-    "highlighted_text": [...]
-  },
-  "fairness_metrics": {
-    "risk_level": "medium",
-    "fairness_score": 0.48,
-    "recommendations": [
-      "Use gender-neutral language",
-      "Review stereotypical associations",
-      "Include diverse perspectives"
-    ],
-    "mitigation_weights": {
-      "original_weight": 1.0,
-      "adjusted_weight": 0.75,
-      "adjustment_factor": 0.25
-    }
-  },
-  "status": "completed"
-}
-```
-
----
-
-## 🧠 Tech Stack
-
-### AI/ML (Primary)
-- **Google Gemini 2.0 Flash Lite** - Primary bias detection model
-- **Groq LLaMA 3** - Secondary fallback model
-- **spaCy / NLTK** - NLP processing
-- **Pattern Matching** - Rule-based detection fallback
-
-### Backend
-- **FastAPI** - Modern Python web framework
-- **Pydantic** - Data validation and settings
-- **Python 3.9+** - Core language
-
-### Frontend
-- **React 18** - UI library
-- **Tailwind CSS** - Utility-first styling
-- **Axios** - HTTP client
-
-### Cloud Infrastructure
-- **Google AI Studio** - Gemini API hosting (FREE tier)
-- **AWS S3** - Object storage for audit logs (optional)
-- **AWS DynamoDB** - NoSQL database for metadata (optional)
-- **Local Storage** - Default storage mode (no cloud required)
-
-### DevOps
-- **Docker** - Containerization
-- **Uvicorn** - ASGI server
-- **Git** - Version control
 
 ---
 
@@ -280,157 +96,243 @@ curl -X POST http://localhost:8000/api/v1/analyze \
 
 ```
 FAIRMEDIA/
-├── backend/                 # FastAPI backend
-│   ├── aws/                # AWS service clients
-│   ├── controller/         # Pipeline orchestration
-│   ├── integration/        # Service adapters
-│   ├── routes/             # API endpoints
-│   └── main.py             # Entry point
-├── frontend/               # React frontend
-│   ├── src/
-│   │   ├── components/     # UI components
-│   │   ├── pages/          # Page components
-│   │   └── api/            # API client
-│   └── package.json
-├── services/               # Core services
-│   ├── ai_engine/          # Bias detection
-│   ├── fairness_engine/    # Fairness calculations
-│   └── storage/            # Data persistence
-├── schemas/                # Data models
-├── infra/                  # Infrastructure docs
-├── tests/                  # Test suite
-└── requirements.txt        # Dependencies
+├── backend/                    # FastAPI server
+│   ├── main.py                 # App entry point
+│   ├── config.py               # Settings via pydantic
+│   ├── routes/
+│   │   ├── analyze.py          # POST /api/v1/analyze
+│   │   ├── batch_analyze.py    # POST /api/v1/batch-*
+│   │   └── fetch_url.py        # POST /api/v1/fetch-url
+│   ├── controller/
+│   │   └── pipeline_controller.py
+│   └── integration/
+│       ├── ai_adapter.py
+│       ├── fairness_adapter.py
+│       └── storage_adapter.py
+│
+├── services/
+│   ├── ai_engine/
+│   │   ├── unified_ai_service.py   # Fallback chain
+│   │   ├── gemini_ai_service.py
+│   │   ├── groq_ai_service.py
+│   │   ├── mock_ai_service.py
+│   │   ├── enhanced_bias_detector.py
+│   │   └── bias_lexicon.py
+│   ├── fairness_engine/
+│   │   ├── fairness_engine.py
+│   │   ├── risk_engine.py
+│   │   └── mitigation_utils.py
+│   └── storage/
+│       └── local_storage.py
+│
+├── schemas/                    # Pydantic models
+│   ├── request_schema.py
+│   ├── response_schema.py
+│   ├── ai_schema.py
+│   └── fairness_schema.py
+│
+├── frontend/                   # React + Vite + Tailwind
+│   └── src/
+│       ├── pages/
+│       │   ├── Dashboard.jsx
+│       │   ├── ContentAnalyzer.jsx
+│       │   ├── LiveEditor.jsx
+│       │   ├── BatchAnalyzer.jsx
+│       │   ├── BiasScores.jsx
+│       │   ├── HumanReview.jsx
+│       │   ├── FairRanking.jsx
+│       │   ├── AuditReports.jsx
+│       │   ├── FairnessMetrics.jsx
+│       │   └── Settings.jsx
+│       ├── components/
+│       └── api/api_client.js
+│
+├── browser-extension/          # Chrome / Edge / Firefox extension
+│   ├── manifest.json           # Manifest V3
+│   ├── popup.html / popup.js
+│   ├── background.js
+│   ├── content.js / content.css
+│   └── icons/
+│
+├── data/audit_logs/            # Stored analysis results (gitignored)
+├── Dockerfile
+├── render.yaml                 # Render deployment config
+├── requirements.txt
+└── .env.example
 ```
 
 ---
 
-## 🧪 Testing
+## 🚀 Local Setup
+
+### Prerequisites
+
+- Python 3.11+
+- Node.js 18+ and npm
+
+### Backend
 
 ```bash
-# Run all tests
-pytest
+# Clone the repo
+git clone https://github.com/SwaraliPatil7579/FAIRMEDIA---An-AI-powered-bias-audit-and-mitigation-system.git
+cd FAIRMEDIA---An-AI-powered-bias-audit-and-mitigation-system
 
-# Run with coverage
-pytest --cov=backend --cov=services
+# Create virtual environment
+python -m venv venv
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS/Linux
 
-# Run specific test
-pytest tests/test_ai_engine.py
+# Install dependencies
+pip install -r requirements.txt
+
+# Configure environment
+copy .env.example .env       # Windows
+# cp .env.example .env       # macOS/Linux
+# Add your GEMINI_API_KEY and/or GROQ_API_KEY in .env
+
+# Start the backend
+python backend/main.py
 ```
 
----
+Backend runs at `http://localhost:8000`  
+API docs at `http://localhost:8000/docs`
 
-## 🚢 Deployment
+### Frontend
 
-### Local Development
 ```bash
-./run_local.sh
+cd frontend
+npm install
+npm run dev
 ```
 
-### AWS Deployment
-See [infra/aws_setup.md](infra/aws_setup.md) for:
-- DynamoDB table setup
-- S3 bucket configuration
-- Bedrock model access
-- Lambda deployment
-- API Gateway setup
-
-See [infra/deployment_steps.md](infra/deployment_steps.md) for:
-- EC2 deployment
-- Docker deployment
-- ECS/EKS deployment
+Frontend runs at `http://localhost:5173`
 
 ---
 
-## 🎯 Key Keywords
+## 🔑 Environment Variables
 
-**Responsible AI • Fairness in AI • Algorithmic Bias Detection • Explainable AI (XAI) • Ethical AI • NLP • Bias Mitigation • Smart Re-weighting • Human-in-the-Loop • Multilingual AI • Fair Ranking Systems**
+Copy `.env.example` to `.env` and fill in:
 
----
+```env
+# AI Keys (optional — falls back to rule-based if not set)
+GEMINI_API_KEY=         # https://aistudio.google.com → Get API Key (free)
+GROQ_API_KEY=           # https://console.groq.com (free)
 
-## 🚀 Impact
+# API Config
+API_HOST=0.0.0.0
+API_PORT=8000
 
-- Promotes **ethical AI deployment**
-- Improves **digital fairness & representation**
-- Reduces **bias amplification**
-- Scalable for **news, search, and recommendation systems**
-- Provides **transparency and accountability**
+# Storage
+STORAGE_MODE=local
+LOCAL_STORAGE_PATH=./data/audit_logs
 
----
-
-## 📊 Features
-
-### Bias Detection
-- ✅ Gender bias detection
-- ✅ Stereotype identification
-- ✅ Language dominance analysis
-- ✅ Text span highlighting
-- ✅ Confidence scoring
-
-### Fairness Metrics
-- ✅ Risk level assessment (low/medium/high/critical)
-- ✅ Fairness score calculation
-- ✅ Weight adjustment algorithms
-- ✅ Actionable recommendations
-- ✅ Detailed metrics per bias type
-
-### Storage & Audit
-- ✅ Local JSON storage
-- ✅ AWS DynamoDB + S3
-- ✅ Complete audit trail
-- ✅ Analysis history
-- ✅ Metadata indexing
-
-### User Interface
-- ✅ Interactive analysis dashboard
-- ✅ Real-time bias visualization
-- ✅ Highlighted text display
-- ✅ Recommendation cards
-- ✅ Fairness metrics charts
+# Frontend
+REACT_APP_API_URL=http://localhost:8000
+```
 
 ---
 
-## 🤝 Contributing
+## 📡 API Reference
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Health Check
+```http
+GET /health
+```
+
+### Analyze Content
+```http
+POST /api/v1/analyze
+Content-Type: application/json
+
+{
+  "content": "The chairman said every businessman should man up.",
+  "language": "en"
+}
+```
+
+### Fetch URL Text
+```http
+POST /api/v1/fetch-url
+Content-Type: application/json
+
+{
+  "url": "https://example.com/article"
+}
+```
+
+### Batch Analyze
+```http
+POST /api/v1/batch-analyze
+Content-Type: application/json
+```
+
+### Get Stored Analysis
+```http
+GET /api/v1/analyze/{analysis_id}
+```
+
+Full interactive docs: https://fairmedia.onrender.com/docs
 
 ---
 
-## 📝 License
+## 🐳 Docker
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
----
-
-## 🆘 Support
-
-For issues and questions:
-- Check the [documentation](infra/)
-- Review [API docs](http://localhost:8000/docs)
-- Open an issue on GitHub
+```bash
+docker build -t fairmedia .
+docker run -p 8080:8080 --env-file .env fairmedia
+```
 
 ---
 
-## 📈 Roadmap
+## 🛠️ Tech Stack
 
-- [ ] Multi-language support (Spanish, French, German, etc.)
-- [ ] Real-time analysis streaming
-- [ ] Custom bias pattern definitions
-- [ ] Integration with CMS platforms
-- [ ] Advanced visualization dashboards
-- [ ] Batch processing API
-- [ ] Webhook notifications
-- [ ] Mobile app support
-
----
-
-## ⭐ Vision
-
-**FAIRMEDIA — Making AI fair, transparent, and accountable.**
+| Layer | Technology |
+|---|---|
+| Frontend | React 18, Vite, Tailwind CSS, Lucide React |
+| Backend | Python 3.11, FastAPI, Uvicorn |
+| Validation | Pydantic v2 |
+| AI (primary) | Google Gemini 2.0 Flash |
+| AI (fallback) | Groq LLaMA 3.3 70B |
+| AI (last resort) | Rule-based bias detector |
+| Browser Extension | Manifest V3 (Chrome, Edge, Firefox) |
+| Deployment | Render (backend), Vercel (frontend) |
+| Storage | Local filesystem (upgradable to S3/DynamoDB) |
 
 ---
 
-Made with ❤️ for a fairer digital world
+## 📊 Bias Categories
+
+| Category | Description |
+|---|---|
+| Gender bias | Gendered language and role assumptions |
+| Stereotype | Group-based generalizations |
+| Age bias | Assumptions based on age |
+| Disability bias | Ableist language |
+| Religious bias | Religious generalizations |
+| Socioeconomic bias | Class-based assumptions |
+| Language dominance | Linguistic exclusion |
+
+---
+
+## ⚠️ Current Limitations
+
+- Storage is local filesystem by default (no database)
+- No authentication or rate limiting yet
+- Rule-based fallback is less context-aware than LLM analysis
+
+---
+
+## 🔮 Roadmap
+
+- [ ] User authentication
+- [ ] API rate limiting
+- [ ] Database-backed audit logs (PostgreSQL)
+- [ ] More language support
+- [ ] Mobile app
+- [ ] Team review workflows
+
+---
+
+## License
+
+MIT

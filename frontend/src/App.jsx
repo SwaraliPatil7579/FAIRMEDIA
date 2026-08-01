@@ -48,7 +48,7 @@ function App() {
       case 'fairness-metrics':
         return <FairnessMetrics />
       default:
-        return <Dashboard />
+        return <Dashboard onNavigate={setCurrentPage} />
     }
   }
 

@@ -1,3 +1,1 @@
-"""
-Google Cloud services integration package.
-"""
+# Google integration (reserved for future use)

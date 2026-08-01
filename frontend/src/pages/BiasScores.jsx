@@ -143,6 +143,10 @@ function BiasScores() {
                 <option value="all">All Types</option>
                 <option value="gender_bias">Gender Bias</option>
                 <option value="stereotype">Stereotype</option>
+                <option value="age_bias">Age Bias</option>
+                <option value="disability_bias">Disability Bias</option>
+                <option value="religious_bias">Religious Bias</option>
+                <option value="socioeconomic_bias">Socioeconomic Bias</option>
                 <option value="language_dominance">Language Dominance</option>
               </select>
             </div>
@@ -241,11 +245,11 @@ function BiasScores() {
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm text-gray-600 capitalize">
-                        {analysis.bias_type.replace('_', ' ')}
+                        {(analysis.bias_type || 'unknown').replace(/_/g, ' ')}
                       </td>
                       <td className="px-6 py-4 text-sm">
-                        <span className={`px-3 py-1 rounded-full font-semibold ${getBiasColor(analysis.bias_score)}`}>
-                          {analysis.bias_score.toFixed(2)}
+                        <span className={`px-3 py-1 rounded-full font-semibold ${getBiasColor(analysis.bias_score ?? 0)}`}>
+                          {(analysis.bias_score ?? 0).toFixed(2)}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-sm">

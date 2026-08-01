@@ -1,0 +1,35 @@
+/* Styles for FAIRMEDIA bias highlighting */
+
+.fairmedia-highlight {
+  background-color: #fef3c7 !important;
+  border-bottom: 2px solid #f59e0b !important;
+  cursor: help !important;
+  position: relative !important;
+  transition: all 0.2s ease !important;
+}
+
+.fairmedia-highlight:hover {
+  background-color: #fde68a !important;
+}
+
+.fairmedia-tooltip {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  background: #1f2937;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  z-index: 10000;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  margin-bottom: 5px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+.fairmedia-highlight:hover .fairmedia-tooltip {
+  opacity: 1;
+}

@@ -1,46 +1,56 @@
 """
-Mitigation utilities for bias adjustment and weight calculations.
+Mitigation utilities — recommendations, weight calculations, text rewriting.
+Supports all 7 bias categories.
 """
 
+import re
 from typing import Dict, List, Tuple, Any
 import logging
-import re
-import sys
-import os
 
 logger = logging.getLogger(__name__)
 
 # ── Master bias replacement dictionary ────────────────────────────────────
-# Copied directly from ai_service.py so no import is needed.
-# Sorted longest-first at runtime to prevent short words corrupting
-# longer phrases (e.g. "man" inside "man of the house").
+# Sorted longest-first at runtime to prevent short words corrupting longer phrases.
 
 _BIAS_REPLACEMENTS: Dict[str, str] = {
-    # Male stereotypes
-    "man up": "be courageous",
-    "boys don't cry": "it's okay to express emotions",
+    # ── Workplace / hiring bias ───────────────────────────────────────────
+    "all-male board of directors": "diverse board of directors",
+    "all-male board": "diverse board",
+    "without family distractions": "with good work-life balance",
+    "family distractions": "personal commitments",
+    "young, hungry coders": "skilled developers",
+    "young and hungry": "motivated and driven",
+    "rockstar developer": "skilled developer",
+    "rockstar engineer": "skilled engineer",
+    "ninja developer": "skilled developer",
+    "ninja engineer": "skilled engineer",
+    "10x developer": "highly productive developer",
+    "10x engineer": "highly productive engineer",
+    "culture fit": "values alignment",
+    "young, hungry": "motivated",
+    "lady programmers": "female developers",
+    "lady programmer": "female developer",
+    "girl coders": "developers",
+    "girl coder": "developer",
+    "work long hours": "work effectively",
+    "hustle culture": "dedicated work culture",
+    "always available": "responsive and reliable",
+    # ── Gender / role phrases (longest first) ─────────────────────────────
+    "women belong in supportive positions": "people can work in any role",
+    "women belong in the kitchen": "people can work in any field",
+    "men are the natural leaders": "people of all genders can lead",
+    "men are natural leaders": "people of all genders can lead",
+    "prioritize family over deadlines": "balance personal and professional priorities",
+    "hispanic workers are hardworking but may have language barriers": "dedicated workers with diverse backgrounds",
+    "african americans excel in creative roles": "individuals with creative skills",
+    "asian developers are naturally good at math": "developers with strong technical skills",
+    "asians are naturally good at math": "individuals with strong math skills",
+    "women are too emotional": "all people experience emotions",
     "boys will be boys": "children should be held to equal standards",
-    "be a man": "be strong",
+    "boys don't cry": "it's okay to express emotions",
     "man of the house": "head of household",
     "man's job": "anyone's job",
-    "mankind": "humankind",
-    "manpower": "workforce",
-    "chairman": "chairperson",
-    "fireman": "firefighter",
-    "policeman": "police officer",
-    "businessman": "businessperson",
-    "spokesman": "spokesperson",
-    "mailman": "mail carrier",
-    "cameraman": "camera operator",
-    "salesman": "salesperson",
-    "foreman": "supervisor",
-    "real men": "people",
-    "aggressive": "assertive",
-    "bossy": "decisive",
-    "dominant": "leading",
-    "authoritative": "knowledgeable",
-    "stubborn": "persistent",
-    # Female stereotypes
+    "woman's place": "anyone's place",
     "like a girl": "with effort",
     "throw like a girl": "throw with less force",
     "don't be such a girl": "don't be so sensitive",
@@ -54,8 +64,39 @@ _BIAS_REPLACEMENTS: Dict[str, str] = {
     "male nurse": "nurse",
     "working mother": "working parent",
     "career woman": "professional",
-    "housewife": "homemaker",
     "old maid": "unmarried person",
+    "men are better at": "individuals vary in their abilities with",
+    "men are naturally": "individuals can be naturally",
+    "women are naturally": "individuals can be naturally",
+    "girls should": "all people should",
+    "real men": "people",
+    "man up": "be courageous",
+    "be a man": "be strong",
+    "built for high-pressure": "suited for demanding",
+    "supportive positions": "various roles",
+    "crumble under stress": "struggle under pressure",
+    "breadwinners": "providers",
+    "breadwinner": "provider",
+    "natural leaders": "capable leaders",
+    "natural leader": "capable leader",
+    "somehow managed": "managed",
+    "surprisingly sharp": "highly capable",
+    "allowing her to": "supporting her to",
+    "juggling family responsibilities": "balancing family responsibilities",
+    "the mother of": "a parent of",
+    # ── Single-word gender ─────────────────────────────────────────────────
+    "chairman": "chairperson",
+    "fireman": "firefighter",
+    "policeman": "police officer",
+    "businessman": "businessperson",
+    "spokesman": "spokesperson",
+    "mailman": "mail carrier",
+    "cameraman": "camera operator",
+    "salesman": "salesperson",
+    "foreman": "supervisor",
+    "mankind": "humankind",
+    "manpower": "workforce",
+    "housewife": "homemaker",
     "tomboy": "active child",
     "emotional": "expressive",
     "hysterical": "upset",
@@ -63,24 +104,59 @@ _BIAS_REPLACEMENTS: Dict[str, str] = {
     "ditzy": "thoughtful",
     "nagging": "persistent",
     "catfight": "disagreement",
-    # Role phrases
-    "women belong in the kitchen": "people can work in any field",
-    "women belong in supportive positions": "people can work in any role",
-    "natural leaders": "capable leaders",
-    "natural leader": "capable leader",
-    "breadwinners": "providers",
-    "breadwinner": "provider",
-    "built for high-pressure": "suited for demanding",
-    "supportive positions": "various roles",
-    "crumble under stress": "struggle under pressure",
-    "prioritize family over deadlines": "balance personal and professional priorities",
-    "men are better at": "individuals vary in their abilities with",
-    "women are too emotional": "all people experience emotions",
-    "men are naturally": "individuals can be naturally",
-    "women are naturally": "individuals can be naturally",
-    "girls should": "all people should",
-    "woman's place": "anyone's place",
-    # Hindi bias terms
+    "aggressive": "assertive",
+    "dominant": "leading",
+    "stubborn": "persistent",
+    # ── Age bias ──────────────────────────────────────────────────────────
+    "millennials are lazy": "younger workers have different work styles",
+    "millennials don't work hard": "work styles vary across generations",
+    "boomers don't understand technology": "technology adoption varies",
+    "too old for this": "experienced in this",
+    "over the hill": "experienced",
+    "past their prime": "highly experienced",
+    "ok boomer": "I respectfully disagree",
+    "young and inexperienced": "early-career",
+    "too young to understand": "still learning",
+    "senior moment": "momentary lapse",
+    "retire already": "consider transitioning roles",
+    "digital native": "tech-savvy person",
+    "digital immigrant": "person learning new technology",
+    # ── Disability bias ───────────────────────────────────────────────────
+    "wheelchair-bound": "wheelchair user",
+    "confined to a wheelchair": "wheelchair user",
+    "suffers from": "has",
+    "afflicted with": "has",
+    "victim of": "person with",
+    "mentally ill": "person with a mental health condition",
+    "high-functioning": "autistic person who",
+    "special needs": "disability",
+    "handicapped": "disabled",
+    "normal people": "people without disabilities",
+    "crazy": "unusual",
+    "insane": "extreme",
+    "lame": "ineffective",
+    # ── Religious bias ────────────────────────────────────────────────────
+    "all muslims are": "some individuals who are Muslim",
+    "typical christian": "some Christians",
+    "religious fanatic": "person with strong religious beliefs",
+    "bible thumper": "devout Christian",
+    # ── Socioeconomic bias ────────────────────────────────────────────────
+    "poor people are lazy": "people in poverty face systemic barriers",
+    "welfare queen": "person receiving social assistance",
+    "born with a silver spoon": "from a wealthy background",
+    "trailer trash": "person living in a mobile home",
+    "white trash": "low-income white person",
+    "uneducated masses": "people without formal education",
+    "bootstraps": "self-reliance",
+    # ── Racial / ethnic stereotypes ───────────────────────────────────────
+    "model minority": "high-achieving individual",
+    "exotic": "unique",
+    "surprisingly articulate": "well-spoken",
+    "articulate": "well-spoken",
+    "one of the good ones": "a valued colleague",
+    "culturally fit": "aligned with team values",
+    "native english speakers": "proficient English speakers",
+    # ── Hindi bias terms ──────────────────────────────────────────────────
     "औरतों का काम": "घर का काम",
     "मर्दानगी": "साहस",
     "मर्दों जैसा": "मजबूत",
@@ -94,145 +170,95 @@ _BIAS_REPLACEMENTS: Dict[str, str] = {
     "मर्द को दर्द नहीं होता": "सभी को दर्द होता है",
 }
 
-# Pronoun neutralisation map
 _PRONOUN_NEUTRAL: Dict[str, str] = {
     "he": "they", "him": "them", "his": "their", "himself": "themselves",
     "she": "they", "her": "them", "hers": "theirs", "herself": "themselves",
 }
 
+
 def calculate_weight_adjustment(
     bias_score: float,
     risk_level: str,
     min_weight: float = 0.1,
-    max_weight: float = 1.0
+    max_weight: float = 1.0,
 ) -> Tuple[float, float, str]:
-    """
-    Calculate weight adjustment based on bias score and risk level.
-
-    Args:
-        bias_score: Overall bias score (0-1)
-        risk_level: Risk level (low, medium, high, critical)
-        min_weight: Minimum allowed weight
-        max_weight: Maximum allowed weight
-
-    Returns:
-        Tuple of (adjusted_weight, adjustment_factor, rationale)
-    """
-    # Risk level multipliers
-    risk_multipliers = {
-        "low": 0.1,
-        "medium": 0.3,
-        "high": 0.5,
-        "critical": 0.7,
-    }
-
+    risk_multipliers = {"low": 0.1, "medium": 0.3, "high": 0.5, "critical": 0.7}
     multiplier = risk_multipliers.get(risk_level, 0.3)
-
-    # Calculate adjustment factor
     adjustment_factor = min(1.0, bias_score * multiplier)
-
-    # Calculate adjusted weight
     adjusted_weight = max(min_weight, max_weight - adjustment_factor)
-
-    # Generate rationale
     rationale = (
         f"Weight adjusted from {max_weight} to {adjusted_weight:.2f} "
         f"due to {risk_level} risk level (bias score: {bias_score:.2f})"
     )
-
-    logger.info(
-        f"Weight adjustment: {max_weight} → {adjusted_weight:.2f} ({risk_level})"
-    )
-
+    logger.info(f"Weight adjustment: {max_weight} → {adjusted_weight:.2f} ({risk_level})")
     return adjusted_weight, adjustment_factor, rationale
 
 
 def generate_recommendations(
-    bias_scores: Dict[str, float],
-    risk_level: str
+    bias_scores: Dict[str, float], risk_level: str
 ) -> List[str]:
-    """
-    Generate actionable recommendations based on bias analysis.
-
-    Args:
-        bias_scores: Dictionary of bias type to score
-        risk_level: Overall risk level
-
-    Returns:
-        List of recommendation strings
-    """
     recommendations: List[str] = []
 
-    # Gender bias recommendations
     if bias_scores.get("gender_bias", 0) > 0.3:
-        recommendations.extend(
-            [
-                "Use gender-neutral language (e.g., 'they' instead of 'he/she')",
-                "Replace gendered job titles with neutral alternatives (e.g., 'chairperson' instead of 'chairman')",
-                "Ensure balanced representation of all genders in examples",
-            ]
-        )
+        recommendations.extend([
+            "Use gender-neutral language (e.g., 'they' instead of 'he/she')",
+            "Replace gendered job titles (e.g., 'chairperson' instead of 'chairman')",
+            "Ensure balanced representation of all genders in examples",
+        ])
 
-    # Stereotype recommendations
     if bias_scores.get("stereotype", 0) > 0.3:
-        recommendations.extend(
-            [
-                "Avoid stereotypical associations between groups and characteristics",
-                "Include diverse perspectives and counter-stereotypical examples",
-                "Review language for implicit assumptions about groups",
-            ]
-        )
+        recommendations.extend([
+            "Avoid stereotypical associations between groups and characteristics",
+            "Include diverse perspectives and counter-stereotypical examples",
+        ])
 
-    # Language dominance recommendations
+    if bias_scores.get("age_bias", 0) > 0.3:
+        recommendations.extend([
+            "Avoid age-based generalizations about generations or age groups",
+            "Focus on skills and experience rather than age",
+        ])
+
+    if bias_scores.get("disability_bias", 0) > 0.3:
+        recommendations.extend([
+            "Use person-first language (e.g., 'person with a disability')",
+            "Avoid ableist terms like 'wheelchair-bound', 'suffers from', 'crazy'",
+        ])
+
+    if bias_scores.get("religious_bias", 0) > 0.3:
+        recommendations.extend([
+            "Avoid generalizations about religious groups",
+            "Distinguish between individual actions and religious identity",
+        ])
+
+    if bias_scores.get("socioeconomic_bias", 0) > 0.3:
+        recommendations.extend([
+            "Avoid class-based stereotypes and assumptions",
+            "Acknowledge systemic factors rather than attributing outcomes to individual character",
+        ])
+
     if bias_scores.get("language_dominance", 0) > 0.3:
-        recommendations.extend(
-            [
-                "Use culturally inclusive language and examples",
-                "Avoid English-centric or Western-centric assumptions",
-                "Consider multilingual and multicultural perspectives",
-            ]
-        )
+        recommendations.extend([
+            "Use culturally inclusive language and examples",
+            "Consider multilingual and multicultural perspectives",
+        ])
 
-    # Risk-specific recommendations
     if risk_level in ["high", "critical"]:
         recommendations.insert(
-            0,
-            "⚠️ HIGH PRIORITY: This content requires immediate review and revision",
+            0, "⚠️ HIGH PRIORITY: This content requires immediate review and revision"
         )
         recommendations.append(
             "Consider having content reviewed by a diverse group of stakeholders"
         )
 
-    # Limit to top recommendations
-    return recommendations[:6]
+    return recommendations[:8]
 
 
 def calculate_fairness_score(bias_scores: Dict[str, float]) -> float:
-    """
-    Calculate overall fairness score from bias scores.
-    Fairness is the inverse of bias.
-
-    Args:
-        bias_scores: Dictionary of bias type to score
-
-    Returns:
-        Fairness score (0-1, higher is better)
-    """
     overall_bias = bias_scores.get("overall", 0.5)
-    fairness = 1.0 - overall_bias
-    return round(fairness, 2)
+    return round(1.0 - overall_bias, 2)
 
 
 def determine_risk_level(bias_score: float) -> str:
-    """
-    Determine risk level from bias score.
-
-    Args:
-        bias_score: Overall bias score (0-1)
-
-    Returns:
-        Risk level string
-    """
     if bias_score < 0.25:
         return "low"
     elif bias_score < 0.5:
@@ -244,50 +270,16 @@ def determine_risk_level(bias_score: float) -> str:
 
 
 def calculate_detailed_metrics(bias_scores: Dict[str, float]) -> Dict[str, float]:
-    """
-    Calculate detailed fairness metrics for each bias type.
-
-    Args:
-        bias_scores: Dictionary of bias type to score
-
-    Returns:
-        Dictionary of detailed fairness metrics
-    """
     return {
         "gender_fairness": round(1.0 - bias_scores.get("gender_bias", 0), 2),
         "stereotype_fairness": round(1.0 - bias_scores.get("stereotype", 0), 2),
-        "language_fairness": round(
-            1.0 - bias_scores.get("language_dominance", 0), 2
-        ),
+        "age_fairness": round(1.0 - bias_scores.get("age_bias", 0), 2),
+        "disability_fairness": round(1.0 - bias_scores.get("disability_bias", 0), 2),
+        "religious_fairness": round(1.0 - bias_scores.get("religious_bias", 0), 2),
+        "socioeconomic_fairness": round(1.0 - bias_scores.get("socioeconomic_bias", 0), 2),
+        "language_fairness": round(1.0 - bias_scores.get("language_dominance", 0), 2),
         "overall_fairness": round(1.0 - bias_scores.get("overall", 0), 2),
     }
-
-
-# ----------------------------------------------------------------------
-# Generic span-based text rewriting for debiasing
-# ----------------------------------------------------------------------
-
-
-def _split_into_sentences(text: str) -> List[str]:
-    """
-    Simple sentence splitter that keeps punctuation.
-    """
-    if not text:
-        return []
-
-    parts = re.split(r"([.!?])", text)
-    sentences: List[str] = []
-
-    for i in range(0, len(parts) - 1, 2):
-        sent = (parts[i] + parts[i + 1]).strip()
-        if sent:
-            sentences.append(sent)
-
-    # Handle trailing text without punctuation
-    if len(parts) % 2 == 1 and parts[-1].strip():
-        sentences.append(parts[-1].strip())
-
-    return sentences
 
 
 def rewrite_biased_text(
@@ -295,20 +287,13 @@ def rewrite_biased_text(
     highlighted_spans: List[Any],
     overall_bias: float,
 ) -> str:
-    """
-    Creates a bias-free alternative version of the text.
-    Uses _BIAS_REPLACEMENTS dictionary directly — no imports needed.
-    """
-
+    """Create a bias-free alternative version of the text."""
     if not original_text or not original_text.strip():
         return original_text
-
     if overall_bias < 0.15:
         return original_text
 
     result = original_text
-
-    # Phase 1: Apply all known replacements, longest phrase first
     sorted_phrases = sorted(_BIAS_REPLACEMENTS.keys(), key=len, reverse=True)
 
     for phrase in sorted_phrases:
@@ -325,37 +310,44 @@ def rewrite_biased_text(
 
         result = pattern.sub(replace_match, result)
 
-    # Phase 2: Also apply whatever spans were passed in
+    # Apply span suggestions for terms not in dictionary
     for span in highlighted_spans:
-        phrase = getattr(span, "text", None)
-        if phrase is None and isinstance(span, dict):
-            phrase = span.get("text")
-        suggestion = getattr(span, "suggestion", None)
-        if suggestion is None and isinstance(span, dict):
-            suggestion = span.get("suggestion")
-        if phrase and suggestion:
+        phrase = getattr(span, "text", None) or (span.get("text") if isinstance(span, dict) else None)
+        suggestion = getattr(span, "suggestion", None) or (span.get("suggestion") if isinstance(span, dict) else None)
+        if phrase and suggestion and phrase not in _BIAS_REPLACEMENTS:
             result = re.sub(re.escape(phrase), suggestion, result, flags=re.IGNORECASE)
 
-    # Phase 3: Rebalance pronouns if one gender dominates
-    male_count   = len(re.findall(r'\b(he|him|his|himself)\b',   result, re.IGNORECASE))
-    female_count = len(re.findall(r'\b(she|her|hers|herself)\b', result, re.IGNORECASE))
+    # Rebalance pronouns if heavily skewed
+    male_count = len(re.findall(r"\b(he|him|his|himself)\b", result, re.IGNORECASE))
+    female_count = len(re.findall(r"\b(she|her|hers|herself)\b", result, re.IGNORECASE))
 
     if male_count > female_count * 3 and male_count > 2:
         _counter = [0]
+
         def _neutral_m(m):
             _counter[0] += 1
             if _counter[0] % 2 == 0:
                 return _PRONOUN_NEUTRAL.get(m.group().lower(), m.group())
             return m.group()
-        result = re.sub(r'\b(he|him|his|himself)\b', _neutral_m, result, flags=re.IGNORECASE)
+
+        result = re.sub(r"\b(he|him|his|himself)\b", _neutral_m, result, flags=re.IGNORECASE)
 
     elif female_count > male_count * 3 and female_count > 2:
         _counter = [0]
+
         def _neutral_f(m):
             _counter[0] += 1
             if _counter[0] % 2 == 0:
                 return _PRONOUN_NEUTRAL.get(m.group().lower(), m.group())
             return m.group()
-        result = re.sub(r'\b(she|her|hers|herself)\b', _neutral_f, result, flags=re.IGNORECASE)
+
+        result = re.sub(r"\b(she|her|hers|herself)\b", _neutral_f, result, flags=re.IGNORECASE)
+
+    # Fix article grammar: "an [consonant-word]" → "a [consonant-word]"
+    result = re.sub(
+        r'\ban\s+([bcdfghjklmnpqrstvwxyzBCDFGHJKLMNPQRSTVWXYZ])',
+        lambda m: 'a ' + m.group(1),
+        result
+    )
 
     return result

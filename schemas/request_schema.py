@@ -81,9 +81,13 @@ class AnalyzeRequest(BaseModel):
         description="Additional metadata about the content"
     )
     
-    @field_validator('content')
+    @field_validator('content', mode='before')
     @classmethod
     def content_not_empty(cls, v):
+        if v is None:
+            raise ValueError('Content cannot be empty')
+        if not isinstance(v, str):
+            v = str(v)
         if not v.strip():
             raise ValueError('Content cannot be empty or whitespace only')
         return v.strip()

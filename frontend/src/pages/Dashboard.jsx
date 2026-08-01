@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { getStats, getAnalyses } from '../utils/analysisStorage'
+import { healthCheck } from '../api/api_client'
 import { 
   FileText, 
   AlertTriangle, 
@@ -11,7 +12,8 @@ import {
   UserCheck,
   Shield,
   Zap,
-  AlertCircle
+  AlertCircle,
+  Activity
 } from 'lucide-react'
 
 function Dashboard({ onNavigate }) {
@@ -22,12 +24,15 @@ function Dashboard({ onNavigate }) {
     pendingReviews: 0
   })
   const [recentAnalyses, setRecentAnalyses] = useState([])
+  const [apiStatus, setApiStatus] = useState(null)
 
   useEffect(() => {
     loadDashboardData()
+    checkApi()
     // Refresh every 5 seconds
     const interval = setInterval(loadDashboardData, 5000)
-    return () => clearInterval(interval)
+    const apiInterval = setInterval(checkApi, 30000)
+    return () => { clearInterval(interval); clearInterval(apiInterval) }
   }, [])
 
   const loadDashboardData = () => {
@@ -38,9 +43,12 @@ function Dashboard({ onNavigate }) {
       mitigated: statsData.mitigated,
       pendingReviews: statsData.pendingReviews
     })
-
     const analyses = getAnalyses()
     setRecentAnalyses(analyses.slice(-5).reverse())
+  }
+
+  const checkApi = () => {
+    healthCheck().then(setApiStatus).catch(() => setApiStatus({ healthy: false }))
   }
 
   const getStatusIcon = (analysis) => {
@@ -59,6 +67,21 @@ function Dashboard({ onNavigate }) {
           <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
           <p className="text-gray-600 mt-1">Real-time bias detection and fairness monitoring</p>
         </div>
+
+        {/* API Status Banner */}
+        {apiStatus !== null && (
+          <div className={`mb-6 p-3 rounded-lg border flex items-center gap-3 ${
+            apiStatus.healthy ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'
+          }`}>
+            <div className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${apiStatus.healthy ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+            <Activity className={`w-4 h-4 ${apiStatus.healthy ? 'text-green-600' : 'text-red-600'}`} />
+            <span className={`text-sm font-medium ${apiStatus.healthy ? 'text-green-800' : 'text-red-800'}`}>
+              {apiStatus.healthy
+                ? `Backend connected · AI: ${apiStatus.ai_model || 'active'}`
+                : 'Backend offline — analyses will use local detection'}
+            </span>
+          </div>
+        )}
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
@@ -145,7 +168,7 @@ function Dashboard({ onNavigate }) {
                     </div>
                     <div>
                       <p className="font-semibold text-gray-900 capitalize group-hover:text-blue-700 transition-colors">
-                        {analysis.bias_type.replace('_', ' ')} detected
+                        {analysis.bias_type.replace(/_/g, ' ')} detected
                       </p>
                       <p className="text-sm text-gray-600 flex items-center gap-2 mt-1">
                         <span className="font-medium">Score: {analysis.bias_score.toFixed(2)}</span>

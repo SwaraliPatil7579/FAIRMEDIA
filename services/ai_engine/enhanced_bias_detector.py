@@ -6,6 +6,11 @@ Supports English and Hindi languages
 
 import re
 from typing import Dict, List, Optional
+from services.ai_engine.bias_lexicon import (
+    ADDITIONAL_BIAS_PATTERNS,
+    DEVANAGARI_BIAS_TERMS,
+    ROMANISED_INDIC_BIAS_TERMS,
+)
 
 # Gender Bias Dictionaries
 # Core pronouns
@@ -45,6 +50,21 @@ GENDER_STEREOTYPE_WORDS = {
         "manpower": "workforce",
         "foreman": "supervisor",
         "salesman": "salesperson",
+        "young, hungry coders": "skilled developers",
+        "young, hungry engineers": "skilled engineers",
+        "young, hungry": "motivated",
+        "rockstar developer": "skilled developer",
+        "family distractions": "personal commitments",
+        "without family distractions": "with good work-life balance",
+        "all-male board": "diverse board",
+        "all-male board of directors": "diverse board of directors",
+        "young, hungry coders": "skilled developers",
+        "lady programmers": "programmers",
+        "work long hours": "work effectively",
+        "hustle culture": "dedicated work culture",
+        "culture fit": "values alignment",
+        "ninja developer": "skilled developer",
+        "10x developer": "highly productive developer",
     },
     "female_stereotypes": {
         "emotional": "expressive",
@@ -65,13 +85,18 @@ GENDER_STEREOTYPE_WORDS = {
         "women belong in the kitchen": "people can work in any field",
         "women are too emotional": "all people experience emotions",
         "like a girl": "with effort",
+        "lady programmers": "programmers",
+        "girl coders": "developers",
+        "girl coder": "developer",
     },
 }
 
 # Romanised Hindi / transliterated bias terms
 # These appear in code-switched / Hinglish text written in Latin script
 ROMANISED_HINDI_BIAS_TERMS = {
+    "ladkiyon ko leadership roles nahi dene chahiye": {"neutral": "leadership roles should be based on ability", "category": "gender_role"},
     "mardangi": {"neutral": "courage", "category": "toxic_masculinity"},
+    "show mardangi": {"neutral": "show courage", "category": "toxic_masculinity"},
     "mardangi dikhao": {"neutral": "show courage", "category": "toxic_masculinity"},
     "rona band karo": {"neutral": "it is okay to express emotions", "category": "toxic_masculinity"},
     "ladke rote nahi": {"neutral": "emotions are natural", "category": "toxic_masculinity"},
@@ -83,10 +108,62 @@ ROMANISED_HINDI_BIAS_TERMS = {
     "auraton ka kaam": {"neutral": "everyone's work", "category": "gender_role"},
     "ghar sambhalna": {"neutral": "household care", "category": "gender_role"},
     "kamzor ling": {"neutral": "person", "category": "derogatory"},
+    "mulgi leadership sathi emotional aste": {"neutral": "leadership ability is not based on gender", "category": "gender_role"},
+    "mulga naturally strong leader asto": {"neutral": "leadership ability varies by individual", "category": "gender_role"},
+    "female employees na support work dya": {"neutral": "assign work based on skills", "category": "gender_role"},
+    "men na client decisions handle karu dya": {"neutral": "qualified employees can handle client decisions", "category": "gender_role"},
+    "auratein tough decisions nahi le sakti": {"neutral": "decision-making ability is not based on gender", "category": "gender_role"},
+    "mardon ko leadership leni chahiye": {"neutral": "leadership should be based on ability", "category": "gender_role"},
+    "ladkon ko kabhi rona nahi chahiye": {"neutral": "everyone can express emotions", "category": "toxic_masculinity"},
 }
 
 # Hindi biased terms with translations
 HINDI_BIAS_TERMS = {
+    "औरतों का काम सिर्फ घर संभालना है": {
+        "translation": "women's work is only managing the home",
+        "neutral": "सभी लोग घर और काम दोनों संभाल सकते हैं",
+        "category": "gender_role",
+    },
+    "औरतों का काम": {
+        "translation": "women's work",
+        "neutral": "सभी का काम",
+        "category": "gender_role",
+    },
+    "पुरुषों को ही बड़े फैसले लेने चाहिए": {
+        "translation": "only men should make big decisions",
+        "neutral": "सभी योग्य लोग बड़े फैसले ले सकते हैं",
+        "category": "gender_role",
+    },
+    "लड़के रोते नहीं हैं": {
+        "translation": "boys do not cry",
+        "neutral": "भावनाएं सभी के लिए स्वाभाविक हैं",
+        "category": "toxic_masculinity",
+    },
+    "लड़के रोते नहीं": {
+        "translation": "boys do not cry",
+        "neutral": "भावनाएं सभी के लिए स्वाभाविक हैं",
+        "category": "toxic_masculinity",
+    },
+    "मर्द को दर्द नहीं होता": {
+        "translation": "men do not feel pain",
+        "neutral": "सभी को दर्द होता है",
+        "category": "toxic_masculinity",
+    },
+    "मर्दानगी": {
+        "translation": "manliness/machismo",
+        "neutral": "साहस",
+        "category": "toxic_masculinity",
+    },
+    "पति परमेश्वर": {
+        "translation": "husband is god",
+        "neutral": "जीवन साथी",
+        "category": "patriarchy",
+    },
+    "पराया धन": {
+        "translation": "someone else's wealth (daughters)",
+        "neutral": "बेटी",
+        "category": "gender_role",
+    },
     # Gender roles
     "औरतों का काम": {
         "translation": "women's work",
@@ -191,8 +268,12 @@ class EnhancedBiasDetector:
         self.male_pronouns = MALE_PRONOUNS
         self.female_pronouns = FEMALE_PRONOUNS
         self.gender_stereotypes = GENDER_STEREOTYPE_WORDS
-        self.hindi_bias_terms = HINDI_BIAS_TERMS
-        self.romanised_hindi_terms = ROMANISED_HINDI_BIAS_TERMS
+        self.hindi_bias_terms = {**HINDI_BIAS_TERMS, **DEVANAGARI_BIAS_TERMS}
+        self.romanised_hindi_terms = {
+            **ROMANISED_HINDI_BIAS_TERMS,
+            **ROMANISED_INDIC_BIAS_TERMS,
+        }
+        self.additional_bias_terms = ADDITIONAL_BIAS_PATTERNS
     
     def detect_language(self, text: str) -> Dict:
         """Detect whether text contains English, Hindi, or mixed content"""
@@ -244,12 +325,19 @@ class EnhancedBiasDetector:
             if total_gender_terms > 0 else 0.0
         )
         
-        # Stereotype detection
+        # Stereotype detection — longest phrases first to prevent partial matches
         found_stereotypes = []
         for category, terms in self.gender_stereotypes.items():
-            for word, alternative in terms.items():
+            for word, alternative in sorted(terms.items(), key=len, reverse=True):
                 pattern = re.compile(r'\b' + re.escape(word) + r'\b', re.IGNORECASE)
                 for match in pattern.finditer(text):
+                    # Skip if position already claimed by a longer match
+                    already = any(
+                        s["start"] <= match.start() < s["end"]
+                        for s in found_stereotypes
+                    )
+                    if already:
+                        continue
                     found_stereotypes.append({
                         "phrase": match.group(),
                         "type": category,
@@ -303,13 +391,14 @@ class EnhancedBiasDetector:
                     start = end
                     continue
                 claimed |= span_positions
+                neutral = info.get("neutral") or info.get("suggestion", "")
                 found_terms.append({
                     "phrase": term,
-                    "translation": info["translation"],
-                    "neutral_alternative": info["neutral"],
+                    "translation": info.get("translation", term),
+                    "neutral_alternative": neutral,
                     "category": info["category"],
                     "type": "hindi_bias",
-                    "suggestion": info["neutral"],
+                    "suggestion": neutral,
                     "start": idx,
                     "end": end,
                 })
@@ -340,12 +429,13 @@ class EnhancedBiasDetector:
                     continue
                 claimed |= span_positions
                 # Map back to original text position
+                neutral = info.get("neutral") or info.get("suggestion", "")
                 found_terms.append({
                     "phrase": text[match.start():match.end()],
                     "category": info["category"],
                     "type": "romanised_hindi_bias",
-                    "suggestion": info["neutral"],
-                    "neutral_alternative": info["neutral"],
+                    "suggestion": neutral,
+                    "neutral_alternative": neutral,
                     "start": match.start(),
                     "end": match.end(),
                 })
@@ -354,6 +444,46 @@ class EnhancedBiasDetector:
         return {
             "biased_terms_found": found_terms,
             "romanised_hindi_bias_score": bias_score,
+            "total_issues": len(found_terms),
+        }
+
+    def detect_additional_bias(self, text: str) -> Dict:
+        """Detect additional explicit bias categories with exact span offsets."""
+        found_terms = []
+        text_lower = text.lower()
+        sorted_terms = sorted(self.additional_bias_terms.keys(), key=len, reverse=True)
+        claimed = set()
+
+        for term in sorted_terms:
+            info = self.additional_bias_terms[term]
+            pattern = re.compile(r'\b' + re.escape(term) + r'\b', re.IGNORECASE)
+            for match in pattern.finditer(text_lower):
+                span_positions = set(range(match.start(), match.end()))
+                if span_positions & claimed:
+                    continue
+                claimed |= span_positions
+                found_terms.append({
+                    "phrase": text[match.start():match.end()],
+                    "category": info["category"],
+                    "type": info["category"],
+                    "suggestion": info["suggestion"],
+                    "neutral_alternative": info["suggestion"],
+                    "start": match.start(),
+                    "end": match.end(),
+                })
+
+        category_scores = {}
+        for item in found_terms:
+            category = item["category"]
+            category_scores[category] = round(
+                min(1.0, category_scores.get(category, 0.0) + 0.25),
+                2,
+            )
+
+        return {
+            "biased_terms_found": found_terms,
+            "category_scores": category_scores,
+            "additional_bias_score": max(category_scores.values(), default=0.0),
             "total_issues": len(found_terms),
         }
 
@@ -371,15 +501,20 @@ class EnhancedBiasDetector:
 
         # Always check for romanised Hindi (present in Hinglish / code-switched text)
         romanised_result = self.detect_romanised_hindi_bias(text)
+        additional_result = self.detect_additional_bias(text)
 
         gender_score    = gender_result["gender_bias_score"]
         hindi_score     = hindi_result["hindi_bias_score"]
         romanised_score = romanised_result["romanised_hindi_bias_score"]
+        additional_score = additional_result["additional_bias_score"]
 
         # Combined score: take the maximum signal across all detectors,
         # then add a small bonus for each additional detector that fired
         # (so mixed-language text with bias in both scripts scores higher).
-        scores = [s for s in [gender_score, hindi_score, romanised_score] if s > 0]
+        scores = [
+            s for s in [gender_score, hindi_score, romanised_score, additional_score]
+            if s > 0
+        ]
         if not scores:
             combined_score = 0.0
         elif len(scores) == 1:
@@ -389,23 +524,27 @@ class EnhancedBiasDetector:
             combined_score = min(1.0, max(scores) + (len(scores) - 1) * 0.2)
         combined_score = round(combined_score, 2)
 
-        # Language dominance: reflects how script-exclusive the content is.
-        # Pure Hindi or pure English both score high (they exclude the other group).
-        # Mixed text scores lower because it's more inclusive.
+        # Language dominance: only flag when Hindi-dominant content excludes English speakers,
+        # or when mixed content has significant Hindi bias terms.
+        # Pure English text is NOT inherently language-dominant.
         hi_pct = lang_info["hindi_pct"]
         en_pct = lang_info["english_pct"]
         if hi_pct >= 70:
-            language_dominance = round(hi_pct / 100.0, 2)
-        elif en_pct >= 70:
-            language_dominance = round(en_pct / 100.0, 2)
+            # Hindi-dominant: score based on how exclusively Hindi it is
+            language_dominance = round(hi_pct / 100.0 * 0.8, 2)
+        elif hi_pct >= 30:
+            # Mixed content — score based on Hindi bias terms found
+            language_dominance = round(min(1.0, hindi_score * 0.8 + romanised_score * 0.4), 2)
         else:
-            # Mixed — lower dominance score
-            language_dominance = round(max(hi_pct, en_pct) / 100.0 * 0.6, 2)
+            # Predominantly English — language dominance only from explicit bias terms
+            # (e.g. "native English speakers only", "American values")
+            language_dominance = round(min(0.4, romanised_score * 0.5), 2)
 
         all_issues = (
             gender_result["stereotypes_found"] +
             hindi_result["biased_terms_found"] +
-            romanised_result["biased_terms_found"]
+            romanised_result["biased_terms_found"] +
+            additional_result["biased_terms_found"]
         )
 
         return {
@@ -413,6 +552,7 @@ class EnhancedBiasDetector:
             "gender_bias": gender_result,
             "hindi_bias": hindi_result,
             "romanised_hindi_bias": romanised_result,
+            "additional_bias": additional_result,
             "language_dominance": language_dominance,
             "combined_bias_score": combined_score,
             "total_issues": len(all_issues),
